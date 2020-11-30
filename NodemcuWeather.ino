@@ -4,7 +4,7 @@
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>                          // Library to send and receive UDP messages
 #include <WiFiClient.h>                       // driver for WiFi client
-#include <ArduinoJson.h>                      // Arduino Json to parse reauest into JSON object. Installed version 5.13, last version is not compatible.
+#include <ArduinoJson.h>                      // Arduino Json to parse request into JSON object. Now compatible with version 6.
 #include <Adafruit_GFX.h>    // LCD graphical driver
 #include <TFT_eSPI.h> // Graphics and font library for ST7735 driver chip
 #include <SPI.h>
@@ -238,23 +238,25 @@ void getWeatherData(){ //client function to send/receive GET request data.
   char jsonArray [result.length()+1];
   result.toCharArray(jsonArray,sizeof(jsonArray));
   jsonArray[result.length() + 1] = '\0';
-  StaticJsonBuffer<1024> json_buf;
-  JsonObject &root = json_buf.parseObject(jsonArray);
-  if (!root.success()){
-    Serial.println("parseObject() failed");
+  StaticJsonDocument<1024> doc;
+  auto error = deserializeJson(doc, jsonArray);
+  if (error) {
+    Serial.print(F("deserializeJson() failed with code "));
+    Serial.println(error.c_str());
+    return;
   }
   
   //TODO : try to understand why this double assignement is necessary
-  String temperatureLOC = root["main"]["temp"];
-  String weatherLOC = root["weather"]["main"];
-  String descriptionLOC = root["weather"]["description"];
-  String idStringLOC = root["weather"]["id"];
-  String umidityPerLOC = root["main"]["humidity"];
-  String windLOC = root["wind"]["speed"];
-  String pressureLOC = root["main"]["pressure"];
-  String visibilityLOC= root["visibility"];
-  String wind_angleLOC = root["wind"]["deg"];
-  String cloudsLOC = root ["clouds"]["all"] ;//["main"] 
+  String temperatureLOC = doc["main"]["temp"];
+  String weatherLOC = doc["weather"]["main"];
+  String descriptionLOC = doc["weather"]["description"];
+  String idStringLOC = doc["weather"]["id"];
+  String umidityPerLOC = doc["main"]["humidity"];
+  String windLOC = doc["wind"]["speed"];
+  String pressureLOC = doc["main"]["pressure"];
+  String visibilityLOC= doc["visibility"];
+  String wind_angleLOC = doc["wind"]["deg"];
+  String cloudsLOC = doc["clouds"]["all"] ;//["main"]  
 
   temperature = temperatureLOC;
   weather = weatherLOC;
